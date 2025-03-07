@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text Display</title>
+    <style>
+        body {
+            background-color: black;
+            color: white;
+            margin: 0;
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: Arial, sans-serif;
+            font-size: 42px;
+            padding: 0;
+            overflow: hidden;
+        }
+        #text-container {
+            text-align: center;
+            opacity: 0;
+            transition: opacity 2s ease-in-out;
+            letter-spacing: 1.5px;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+            font-weight: 300;
+            max-width: 80%;
+            line-height: 1.4;
+            padding: 0 40px;
+        }
+        /* 添加全屏按钮样式 */
+        #fullscreen-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 10px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div id="text-container"></div>
+    <button id="fullscreen-btn">全屏</button>
+    <script>
+        const texts = [
+            "一切都是模糊的，直至你试图使其精确时，你才会发现，我们日常表达出来的精确与真正的精确相距甚远。以至于当我们说话时，你无法假设这就是对方真正的意思。",
+            "如果你没有时间集中精力学习新知识，那么就花时间复习已经学过的内容。",
+            "在程序员心中，他们认为自己是建筑师。当他们来到一个新地方，他们想做的第一件事就是推平这个地方，并建造一些宏伟的东西。程序员对渐进式翻新不感兴趣：修修补补、改进、在花坛种上绿植……他们不想做这些事，他们总是想扔掉旧代码并重新开始，原因并非是认为旧代码一团糟，而是编程的一个基本法则：阅读代码比编写代码更难。",
+            "当革命性的新产品、新技术出现时，能够识别它、跟上它。"
+        ];
+        
+        let currentIndex = 0;
+        const container = document.getElementById('text-container');
+
+        function displayText() {
+            container.style.opacity = "0";
+            
+            setTimeout(() => {
+                container.textContent = texts[currentIndex];
+                container.style.opacity = "1";
+                currentIndex = (currentIndex + 1) % texts.length;
+            }, 2000);
+        }
+
+        displayText();
+        setInterval(displayText, 16000);
+
+        // 添加全屏功能
+        const fullscreenBtn = document.getElementById('fullscreen-btn');
+        
+        fullscreenBtn.addEventListener('click', () => {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+                // 自动横屏
+                if (screen.orientation) {
+                    screen.orientation.lock('landscape').catch(err => console.log(err));
+                }
+            } else {
+                document.exitFullscreen();
+            }
+        });
+
+        // 全屏时自动隐藏按钮
+        document.addEventListener('fullscreenchange', () => {
+            fullscreenBtn.style.opacity = document.fullscreenElement ? "0" : "1";
+            setTimeout(() => {
+                fullscreenBtn.style.display = document.fullscreenElement ? "none" : "block";
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
