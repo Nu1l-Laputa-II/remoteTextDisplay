@@ -46,30 +46,80 @@
 </head>
 <body>
     <div id="text-container"></div>
+    <div id="update-time" style="position: fixed; bottom: 20px; left: 20px; font-size: 12px; opacity: 0.5;"></div>
     <button id="fullscreen-btn">全屏</button>
     <script>
-        const texts = [
-            "一切都是模糊的，直至你试图使其精确时，你才会发现，我们日常表达出来的精确与真正的精确相距甚远。以至于当我们说话时，你无法假设这就是对方真正的意思。",
-            "如果你没有时间集中精力学习新知识，那么就花时间复习已经学过的内容。",
-            "在程序员心中，他们认为自己是建筑师。当他们来到一个新地方，他们想做的第一件事就是推平这个地方，并建造一些宏伟的东西。程序员对渐进式翻新不感兴趣：修修补补、改进、在花坛种上绿植……他们不想做这些事，他们总是想扔掉旧代码并重新开始，原因并非是认为旧代码一团糟，而是编程的一个基本法则：阅读代码比编写代码更难。",
-            "当革命性的新产品、新技术出现时，能够识别它、跟上它。"
-        ];
-        
+        let texts = [];
         let currentIndex = 0;
         const container = document.getElementById('text-container');
+        const updateTimeEl = document.getElementById('update-time');
+
+        async function fetchSentences() {
+            const maxRetries = 3;
+            const rawUrl = 'https://raw.githubusercontent.com/Nu1l-Laputa-II/goldenSentence/main/sentence.md';
+            
+            for (let attempt = 0; attempt < maxRetries; attempt++) {
+                try {
+                    const response = await fetch(rawUrl, { cache: 'no-cache' }); // 禁用缓存
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const text = await response.text();
+                    const newTexts = text.split('\n\n')
+                        .filter(sentence => sentence.trim())
+                        .map(sentence => sentence.replace(/^[#\s-]+|[#\s-]+$/g, '').trim());
+                    
+                    // 检查是否有新内容
+                    if (JSON.stringify(newTexts) !== JSON.stringify(texts)) {
+                        texts = newTexts;
+                        localStorage.setItem('cachedSentences', JSON.stringify(texts));
+                        localStorage.setItem('lastUpdateTime', new Date().toLocaleString());
+                        updateTimeEl.textContent = `上次更新: ${new Date().toLocaleString()}`;
+                        currentIndex = 0; // 重置到第一句
+                    }
+                    return;
+                } catch (error) {
+                    console.error(`尝试 ${attempt + 1} 失败:`, error);
+                    if (attempt === maxRetries - 1 && texts.length === 0) {
+                        texts = ['无法加载句子，请检查网络连接或稍后再试'];
+                    }
+                    await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, attempt)));
+                }
+            }
+        }
 
         function displayText() {
             container.style.opacity = "0";
             
             setTimeout(() => {
-                container.textContent = texts[currentIndex];
+                const currentText = texts[currentIndex];
+                container.textContent = currentText;
                 container.style.opacity = "1";
                 currentIndex = (currentIndex + 1) % texts.length;
+                
+                // 计算下一次显示的延迟时间（每个字符0.2秒 + 2秒淡入淡出时间）
+                const nextDelay = Math.max(currentText.length * 200 + 2000, 4000);
+                setTimeout(displayText, nextDelay);
             }, 2000);
         }
 
-        displayText();
-        setInterval(displayText, 16000);
+        async function init() {
+            // 首先加载缓存的内容
+            const cachedTexts = localStorage.getItem('cachedSentences');
+            const lastUpdateTime = localStorage.getItem('lastUpdateTime');
+            if (cachedTexts) {
+                texts = JSON.parse(cachedTexts);
+                updateTimeEl.textContent = `上次更新: ${lastUpdateTime || '未知'}`;
+            }
+
+            await fetchSentences(); // 初次加载
+            displayText();
+            
+            // 每5分钟检查一次更新
+            setInterval(fetchSentences, 5 * 60 * 1000);
+        }
+
+        init();
 
         // 添加全屏功能
         const fullscreenBtn = document.getElementById('fullscreen-btn');
