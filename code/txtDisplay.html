@@ -30,7 +30,6 @@
             line-height: 1.4;
             padding: 0 40px;
         }
-        /* 添加全屏按钮样式 */
         #fullscreen-btn {
             position: fixed;
             bottom: 20px;
@@ -60,7 +59,7 @@
             
             for (let attempt = 0; attempt < maxRetries; attempt++) {
                 try {
-                    const response = await fetch(rawUrl, { cache: 'no-cache' }); // 禁用缓存
+                    const response = await fetch(rawUrl, { cache: 'no-cache' });
                     if (!response.ok) {
                         throw new Error(`HTTP error! status: ${response.status}`);
                     }
@@ -69,13 +68,12 @@
                         .filter(sentence => sentence.trim())
                         .map(sentence => sentence.replace(/^[#\s-]+|[#\s-]+$/g, '').trim());
                     
-                    // 检查是否有新内容
                     if (JSON.stringify(newTexts) !== JSON.stringify(texts)) {
                         texts = newTexts;
                         localStorage.setItem('cachedSentences', JSON.stringify(texts));
                         localStorage.setItem('lastUpdateTime', new Date().toLocaleString());
                         updateTimeEl.textContent = `上次更新: ${new Date().toLocaleString()}`;
-                        currentIndex = 0; // 重置到第一句
+                        currentIndex = 0;
                     }
                     return;
                 } catch (error) {
@@ -97,14 +95,12 @@
                 container.style.opacity = "1";
                 currentIndex = (currentIndex + 1) % texts.length;
                 
-                // 计算下一次显示的延迟时间（每个字符0.2秒 + 2秒淡入淡出时间）
                 const nextDelay = Math.max(currentText.length * 200 + 2000, 4000);
                 setTimeout(displayText, nextDelay);
             }, 2000);
         }
 
         async function init() {
-            // 首先加载缓存的内容
             const cachedTexts = localStorage.getItem('cachedSentences');
             const lastUpdateTime = localStorage.getItem('lastUpdateTime');
             if (cachedTexts) {
@@ -112,22 +108,18 @@
                 updateTimeEl.textContent = `上次更新: ${lastUpdateTime || '未知'}`;
             }
 
-            await fetchSentences(); // 初次加载
+            await fetchSentences();
             displayText();
-            
-            // 每5分钟检查一次更新
             setInterval(fetchSentences, 5 * 60 * 1000);
         }
 
         init();
 
-        // 添加全屏功能
         const fullscreenBtn = document.getElementById('fullscreen-btn');
         
         fullscreenBtn.addEventListener('click', () => {
             if (!document.fullscreenElement) {
                 document.documentElement.requestFullscreen();
-                // 自动横屏
                 if (screen.orientation) {
                     screen.orientation.lock('landscape').catch(err => console.log(err));
                 }
@@ -136,7 +128,6 @@
             }
         });
 
-        // 全屏时自动隐藏按钮
         document.addEventListener('fullscreenchange', () => {
             fullscreenBtn.style.opacity = document.fullscreenElement ? "0" : "1";
             setTimeout(() => {
